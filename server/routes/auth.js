@@ -5,58 +5,40 @@ const User = require('../models/user');
 
 const router = express.Router();
 
-router.post('/register', async (req,res) => {
-    const { email,password } = req.body;
+router.post('/register', async (req, res) => {
+  const { email, password } = req.body;
 
-    try {
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ message: 'User Already Exists' });
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: 'User Already Exists' });
 
-        const hashedPassword = await bcrypt.hash(password,10);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ email, password: hashedPassword });
+    await user.save();
 
-        const user = new User({ email, password: hashedPassword });
-        await user.save();
-
-        res.status(201).json({ message: 'User Created Successfully' });
-
-    } catch (err) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-
-
+    res.status(201).json({ message: 'User Created Successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server Error' });
+  }
 });
 
-// LOGIN ROUTE
 router.post('/login', async (req, res) => {
   console.log('🟡 Login endpoint hit');
-  console.log('📥 Body received:', req.body);
-
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
-    console.log('🔍 User:', user);
-
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials (user not found)' });
-    }
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('🔑 Password match:', isMatch);
-
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials (wrong password)' });
-    }
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log('✅ Token generated:', token);
-
     res.json({ token });
   } catch (err) {
-    console.error('❌ Error:', err.message);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Login error:', err.message);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
-
 
 module.exports = router;

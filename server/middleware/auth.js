@@ -2,17 +2,18 @@ const jwt = require('jsonwebtoken');
 
 function authMiddleware(req, res, next) {
   const token = req.header('Authorization');
+  console.log('🔐 Token received:', token);
 
-  if (!token) {
-    return res.status(401).json({ message: 'Access denied. No token provided.' });
-  }
+  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId: ... }
-    next(); // continue to the protected route
+    console.log('✅ Token verified:', decoded);
+    req.user = decoded;
+    next();
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token.' });
+    console.error('❌ Invalid token:', err.message);
+    res.status(403).json({ message: 'Invalid token.' });
   }
 }
 
