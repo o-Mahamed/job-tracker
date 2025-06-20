@@ -13,7 +13,10 @@ app.use(express.json()); // allows us to parse JSON bodies
 
 //
 const authRoutes = require('./routes/auth');
+const jobRoutes = require('./routes/jobs');
+
 app.use('/api/auth', authRoutes);
+app.use('/api/jobs', jobRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {

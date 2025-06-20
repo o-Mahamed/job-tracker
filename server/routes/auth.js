@@ -26,24 +26,37 @@ router.post('/register', async (req,res) => {
 
 });
 
-router.post('/login', async (req,res) => {
-    const { email, password } = req.body;
+// LOGIN ROUTE
+router.post('/login', async (req, res) => {
+  console.log('🟡 Login endpoint hit');
+  console.log('📥 Body received:', req.body);
 
-    try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: 'Invalid Credentials'});
+  const { email, password } = req.body;
 
-        const isMatch = await bcrypt.compare(password, user.password);
+  try {
+    const user = await User.findOne({ email });
+    console.log('🔍 User:', user);
 
-        if (!isMatch) return res.status(400).json({ message: 'Invalid Password' });
-
-        const token = jwt.sign({ userId: user._id}, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ token });
-
-    } catch (err) {
-        res.status(500).json({ message: 'Server Error' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials (user not found)' });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('🔑 Password match:', isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials (wrong password)' });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    console.log('✅ Token generated:', token);
+
+    res.json({ token });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
+
 
 module.exports = router;
